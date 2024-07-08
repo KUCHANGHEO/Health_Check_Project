@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useParams, useNavigate, Link } from "react-router-dom";
 
 const ServiceEditForm = () => {
   const { id } = useParams();
-  const [name, setName] = useState('');
-  const [url, setUrl] = useState('');
-  const [serverInfo, setServerInfo] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [serverInfo, setServerInfo] = useState("");
+  const [description, setDescription] = useState("");
+  const [workDirectory, setWorkDirectory] = useState("");
+  const [executeCommand, setExecuteCommand] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,8 +21,10 @@ const ServiceEditForm = () => {
         setUrl(service.url);
         setServerInfo(service.server_info);
         setDescription(service.description);
+        setWorkDirectory(service.work_directory);
+        setExecuteCommand(service.execute_command);
       } catch (error) {
-        console.error('There was an error fetching the service:', error);
+        console.error("There was an error fetching the service:", error);
       }
     };
 
@@ -29,12 +33,19 @@ const ServiceEditForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const service = { name, url, server_info: serverInfo, description };
+    const service = {
+      name,
+      url,
+      server_info: serverInfo,
+      description,
+      work_directory: workDirectory,
+      execute_command: executeCommand,
+    };
     try {
       await axios.put(`/api/services/${id}`, service);
-      navigate('/services');
+      navigate("/services");
     } catch (error) {
-      console.error('There was an error updating the service:', error);
+      console.error("There was an error updating the service:", error);
     }
   };
 
@@ -44,19 +55,51 @@ const ServiceEditForm = () => {
       <form onSubmit={handleSubmit}>
         <div>
           <label>Name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
         <div>
           <label>URL:</label>
-          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
         </div>
         <div>
           <label>Server Info:</label>
-          <input type="text" value={serverInfo} onChange={(e) => setServerInfo(e.target.value)} />
+          <input
+            type="text"
+            value={serverInfo}
+            onChange={(e) => setServerInfo(e.target.value)}
+          />
         </div>
         <div>
           <label>Description:</label>
-          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Work Directory:</label>
+          <input
+            type="text"
+            value={workDirectory}
+            onChange={(e) => setWorkDirectory(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Execute Command:</label>
+          <input
+            type="text"
+            value={executeCommand}
+            onChange={(e) => setExecuteCommand(e.target.value)}
+          />
         </div>
         <button type="submit">Submit</button>
       </form>

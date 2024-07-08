@@ -4,6 +4,7 @@ import ServiceList from './components/ServiceList';
 import ServiceForm from './components/ServiceForm';
 import ServiceEditForm from './components/ServiceEditForm';
 import StatusCheckList from './components/StatusCheckList';
+import Home from './components/Home';
 
 function App() {
   return (
@@ -26,11 +27,11 @@ function App() {
           </ul>
         </nav>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/services" element={<ServiceList />} />
           <Route path="/service/new" element={<ServiceForm />} />
           <Route path="/services/:id/edit" element={<ServiceEditForm />} />
           <Route path="/status" element={<StatusCheckList />} />
-          <Route path="/" element={<div>Home</div>} />
         </Routes>
       </div>
     </Router>

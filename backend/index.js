@@ -1,16 +1,25 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3001; // 변경된 포트 번호
+const PORT = process.env.PORT || 3001;
 const { sequelize } = require('./models');
 const servicesRouter = require('./routes/services');
 const checkServiceStatus = require('./utils/statusCheck');
 const cron = require('node-cron');
+const logger = require('./logger');
+const requestLogger = require('./requestLogger');
 
 app.use(express.json());
+app.use(requestLogger); // 요청 로깅 미들웨어 추가
 app.use('/api', servicesRouter);
 
 app.get('/', (req, res) => {
   res.send('Health Check Monitoring Service');
+});
+
+// 에러 처리 미들웨어
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
 app.listen(PORT, async () => {

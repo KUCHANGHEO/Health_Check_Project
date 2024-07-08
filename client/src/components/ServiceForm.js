@@ -1,22 +1,31 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
 
 const ServiceForm = () => {
-  const [name, setName] = useState('');
-  const [url, setUrl] = useState('');
-  const [serverInfo, setServerInfo] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+  const [serverInfo, setServerInfo] = useState("");
+  const [description, setDescription] = useState("");
+  const [workDirectory, setWorkDirectory] = useState("");
+  const [executeCommand, setExecuteCommand] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const service = { name, url, server_info: serverInfo, description };
+    const service = {
+      name,
+      url,
+      server_info: serverInfo,
+      description,
+      work_directory: workDirectory,
+      execute_command: executeCommand,
+    };
     try {
-      await axios.post('/api/services', service);
-      navigate('/services');
+      await axios.post("/api/services", service);
+      navigate("/services");
     } catch (error) {
-      console.error('There was an error registering the service:', error);
+      console.error("There was an error registering the service:", error);
     }
   };
 
@@ -26,19 +35,51 @@ const ServiceForm = () => {
       <form onSubmit={handleSubmit}>
         <div>
           <label>Name:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
         <div>
           <label>URL:</label>
-          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} />
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
         </div>
         <div>
           <label>Server Info:</label>
-          <input type="text" value={serverInfo} onChange={(e) => setServerInfo(e.target.value)} />
+          <input
+            type="text"
+            value={serverInfo}
+            onChange={(e) => setServerInfo(e.target.value)}
+          />
         </div>
         <div>
           <label>Description:</label>
-          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Work Directory:</label>
+          <input
+            type="text"
+            value={workDirectory}
+            onChange={(e) => setWorkDirectory(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Execute Command:</label>
+          <input
+            type="text"
+            value={executeCommand}
+            onChange={(e) => setExecuteCommand(e.target.value)}
+          />
         </div>
         <button type="submit">Submit</button>
       </form>
