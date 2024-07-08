@@ -1,31 +1,31 @@
-const axios = require('axios');
-const { StatusCheck, Service } = require('../models');
+const axios = require("axios");
+const { StatusCheck } = require("../models");
 
-const checkServiceStatus = async () => {
-  const services = await Service.findAll();
+const checkServiceStatus = async (service) => {
+  const startTime = new Date();
+  try {
+    const response = await axios.get(service.url);
+    const endTime = new Date();
 
-  for (const service of services) {
-    try {
-      const startTime = new Date().getTime();
-      const response = await axios.get(service.url);
-      const endTime = new Date().getTime();
+    const statusCheck = await StatusCheck.create({
+      service_id: service.id,
+      check_time: endTime,
+      response_time: endTime - startTime,
+      status_code: response.status,
+    });
 
-      const status = response.data.status === 'success' ? 200 : 500;
+    return statusCheck;
+  } catch (error) {
+    const endTime = new Date();
 
-      await StatusCheck.create({
-        service_id: service.id,
-        check_time: new Date(),
-        response_time: endTime - startTime,
-        status_code: status
-      });
-    } catch (error) {
-      await StatusCheck.create({
-        service_id: service.id,
-        check_time: new Date(),
-        response_time: null,
-        status_code: error.response ? error.response.status : 500
-      });
-    }
+    const statusCheck = await StatusCheck.create({
+      service_id: service.id,
+      check_time: endTime,
+      response_time: endTime - startTime,
+      status_code: error.response ? error.response.status : 500,
+    });
+
+    return statusCheck;
   }
 };
 

@@ -1,10 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import ServiceList from './components/ServiceList';
-import ServiceForm from './components/ServiceForm';
-import ServiceEditForm from './components/ServiceEditForm';
-import StatusCheckList from './components/StatusCheckList';
-import Home from './components/Home';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import ServiceList from "./components/ServiceList";
+import ServiceForm from "./components/ServiceForm";
+import ServiceEditForm from "./components/ServiceEditForm";
+import StatusCheckList from "./components/StatusCheckList";
+import Home from "./components/Home";
+import ServiceDetail from "./components/ServiceDetail";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/services" element={<ServiceList />} />
           <Route path="/service/new" element={<ServiceForm />} />
           <Route path="/services/:id/edit" element={<ServiceEditForm />} />
+          <Route path="/services/:id" element={<ServiceDetail />} />
           <Route path="/status" element={<StatusCheckList />} />
         </Routes>
       </div>

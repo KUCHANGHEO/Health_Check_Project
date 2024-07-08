@@ -17,8 +17,32 @@ router.post("/services", async (req, res) => {
 // 서비스 조회
 router.get("/services", async (req, res) => {
   try {
-    const services = await Service.findAll();
-    res.status(200).json(services);
+    const services = await Service.findAll({
+      include: [
+        {
+          model: StatusCheck,
+          as: "StatusChecks",
+          limit: 1,
+          order: [["check_time", "DESC"]],
+        },
+      ],
+    });
+
+    const serviceData = services.map((service) => {
+      const lastCheck = service.StatusChecks[0];
+      const status = lastCheck
+        ? lastCheck.status_code === 200
+          ? "Healthy"
+          : "Unhealthy"
+        : "Unknown";
+      return {
+        id: service.id,
+        name: service.name,
+        status,
+      };
+    });
+
+    res.status(200).json(serviceData);
   } catch (error) {
     logger.error("Error fetching services:", error);
     res.status(500).json({ error: error.message });

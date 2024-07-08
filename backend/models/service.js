@@ -33,7 +33,10 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Service.associate = (models) => {
-    Service.hasMany(models.StatusCheck, { foreignKey: "service_id" });
+    Service.hasMany(models.StatusCheck, {
+      foreignKey: "service_id",
+      as: "StatusChecks",
+    });
   };
 
   return Service;
