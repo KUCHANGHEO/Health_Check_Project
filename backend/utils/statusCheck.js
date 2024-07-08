@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { StatusCheck } = require("../models");
+const logger = require("../logger");
 
 const checkServiceStatus = async (service) => {
   const startTime = new Date();
@@ -14,17 +15,22 @@ const checkServiceStatus = async (service) => {
       status_code: response.status,
     });
 
+    logger.info(`Service ${service.name} is Healthy`);
     return statusCheck;
   } catch (error) {
     const endTime = new Date();
 
+    const statusCode = error.response ? error.response.status : 500;
     const statusCheck = await StatusCheck.create({
       service_id: service.id,
       check_time: endTime,
       response_time: endTime - startTime,
-      status_code: error.response ? error.response.status : 500,
+      status_code: statusCode,
     });
 
+    logger.error(
+      `Service ${service.name} is Unhealthy: ${error.message} (status code: ${statusCode})`
+    );
     return statusCheck;
   }
 };

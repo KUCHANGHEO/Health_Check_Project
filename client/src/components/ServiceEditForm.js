@@ -10,6 +10,8 @@ const ServiceEditForm = () => {
   const [description, setDescription] = useState("");
   const [workDirectory, setWorkDirectory] = useState("");
   const [executeCommand, setExecuteCommand] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,8 +25,10 @@ const ServiceEditForm = () => {
         setDescription(service.description);
         setWorkDirectory(service.work_directory);
         setExecuteCommand(service.execute_command);
+        setLoading(false);
       } catch (error) {
-        console.error("There was an error fetching the service:", error);
+        setError("Error fetching service data.");
+        setLoading(false);
       }
     };
 
@@ -33,7 +37,7 @@ const ServiceEditForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const service = {
+    const updatedService = {
       name,
       url,
       server_info: serverInfo,
@@ -42,12 +46,21 @@ const ServiceEditForm = () => {
       execute_command: executeCommand,
     };
     try {
-      await axios.put(`/api/services/${id}`, service);
+      await axios.put(`/api/services/${id}`, updatedService);
       navigate("/services");
     } catch (error) {
+      setError("Error updating service.");
       console.error("There was an error updating the service:", error);
     }
   };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
 
   return (
     <div>

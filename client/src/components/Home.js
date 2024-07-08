@@ -6,22 +6,40 @@ const Home = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await axios.get("/api/services");
-        setServices(result.data);
-        setLoading(false);
-      } catch (error) {
-        setError("Error fetching home data.");
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const result = await axios.get("/api/services");
+      setServices(result.data);
+      setLoading(false);
+    } catch (error) {
+      setError("Error fetching home data.");
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
+
+  const refreshServices = async () => {
+    setRefreshing(true);
+    try {
+      const serviceStatuses = await Promise.all(
+        services.map((service) =>
+          axios
+            .get(`/api/services/${service.id}/check`)
+            .then((response) => response.data)
+        )
+      );
+      setServices(serviceStatuses);
+    } catch (error) {
+      setError("Error refreshing service statuses.");
+    }
+    setRefreshing(false);
+  };
 
   if (loading) {
     return <p>Loading...</p>;
@@ -45,14 +63,23 @@ const Home = () => {
     <div>
       <h1>Dashboard</h1>
       <div>
-        <h2>Services</h2>
+        <h2>
+          Services
+          <button
+            onClick={refreshServices}
+            disabled={refreshing}
+            style={{ marginLeft: "16px" }}
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </h2>
         <div style={{ display: "flex", flexWrap: "wrap" }}>
           {services.map((service) => (
             <div
               key={service.id}
               onClick={() => handleServiceClick(service.id)}
               style={{
-                border: `2px solid black`, // 테두리 색상을 검정색으로 변경
+                border: `2px solid black`,
                 borderRadius: "8px",
                 padding: "16px",
                 margin: "8px",
