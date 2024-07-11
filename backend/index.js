@@ -9,7 +9,7 @@ const logger = require("./utils/logger");
 const requestLogger = require("./utils/requestLogger");
 
 app.use(express.json());
-app.use(requestLogger);
+app.use(requestLogger); // requestLogger 미들웨어 추가
 app.use("/api", servicesRouter);
 
 app.get("/", (req, res) => {

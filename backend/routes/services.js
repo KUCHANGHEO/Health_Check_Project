@@ -10,13 +10,17 @@ router.post("/services", async (req, res) => {
     const service = await Service.create(req.body);
     res.status(201).json(service);
   } catch (error) {
-    logger.error("Error creating service:", error);
+    logger.error("Error creating service:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
 
 // 서비스 조회
 router.get("/services", async (req, res) => {
+  logger.info("Fetching services");
   try {
     const services = await Service.findAll({
       include: [
@@ -43,9 +47,11 @@ router.get("/services", async (req, res) => {
       };
     });
 
+    logger.info("Services fetched successfully", { serviceData });
+
     res.status(200).json(serviceData);
   } catch (error) {
-    logger.error("Error fetching services:", error);
+    logger.error("Error fetching services:", { message: error.message, stack: error.stack });
     res.status(500).json({ error: error.message });
   }
 });
@@ -63,7 +69,10 @@ router.get("/services/:id/check", async (req, res) => {
 
     res.status(200).json({ id: service.id, name: service.name, status });
   } catch (error) {
-    logger.error("Error checking service status:", error);
+    logger.error("Error checking service status:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -85,9 +94,12 @@ router.get("/services/:id/refresh", async (req, res) => {
     }
 
     const updatedService = await Service.findByPk(req.params.id);
-    res.status(200).json(updatedService);
+    res.status(200).json(updatedService);  // 304 상태 코드 대신 200 상태 코드로 변경
   } catch (error) {
-    logger.error("Error refreshing service status:", error);
+    logger.error("Error refreshing service status:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -101,7 +113,10 @@ router.get("/services/:id/logs", async (req, res) => {
     });
     res.status(200).json(logs);
   } catch (error) {
-    logger.error("Error fetching service logs:", error);
+    logger.error("Error fetching service logs:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -114,7 +129,10 @@ router.get("/status", async (req, res) => {
     });
     res.status(200).json(statusChecks);
   } catch (error) {
-    logger.error("Error fetching status checks:", error);
+    logger.error("Error fetching status checks:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -129,7 +147,10 @@ router.get("/services/:id", async (req, res) => {
 
     res.status(200).json(service);
   } catch (error) {
-    logger.error("Error fetching service:", error);
+    logger.error("Error fetching service:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -147,7 +168,10 @@ router.put("/services/:id", async (req, res) => {
       throw new Error("Service not found");
     }
   } catch (error) {
-    logger.error("Error updating service:", error);
+    logger.error("Error updating service:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -164,7 +188,36 @@ router.delete("/services/:id", async (req, res) => {
       throw new Error("Service not found");
     }
   } catch (error) {
-    logger.error("Error deleting service:", error);
+    logger.error("Error deleting service:", {
+      message: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 모든 서비스의 tags 가져오기
+router.get("/filters", async (req, res) => {
+  logger.info("Fetching filters");
+  try {
+    const services = await Service.findAll();
+    const tagsSet = new Set();
+
+    services.forEach(service => {
+      if (service.tags) {
+        service.tags.forEach(tag => tagsSet.add(tag));
+      }
+    });
+
+    const filters = {
+      tags: Array.from(tagsSet)
+    };
+
+    logger.info("Filters fetched successfully", { filters });
+
+    res.status(200).json(filters);
+  } catch (error) {
+    logger.error("Error fetching filters:", { message: error.message, stack: error.stack });
     res.status(500).json({ error: error.message });
   }
 });

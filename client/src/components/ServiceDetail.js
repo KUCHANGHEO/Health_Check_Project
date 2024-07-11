@@ -1,59 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
 const ServiceDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchService = async () => {
+  const fetchService = useCallback(async () => {
     try {
-      const result = await axios.get(`/api/services/${id}`);
-      setService(result.data);
-      const logResult = await axios.get(`/api/services/${id}/logs`);
-      setLogs(logResult.data);
-      setLoading(false);
+      const response = await axios.get(`/api/services/${id}`);
+      setService(response.data);
     } catch (error) {
       setError("Error fetching service data.");
-      setLoading(false);
     }
+  }, [id]);
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const response = await axios.get(`/api/services/${id}/logs`);
+      setLogs(response.data);
+    } catch (error) {
+      setError("Error fetching service logs.");
+    }
+  }, [id]);
+
+  const refreshService = async () => {
+    setRefreshing(true);
+    try {
+      const response = await axios.get(`/api/services/${id}/refresh`);
+      setService(response.data);
+    } catch (error) {
+      setError("Error refreshing service data.");
+    }
+    setRefreshing(false);
   };
 
   useEffect(() => {
     fetchService();
-  }, [id]);
+    fetchLogs();
+  }, [fetchService, fetchLogs]);
 
-  const handleRefresh = async () => {
-    try {
-      setLoading(true);
-      const result = await axios.get(`/api/services/${id}/refresh`);
-      setService(result.data);
-      const logResult = await axios.get(`/api/services/${id}/logs`);
-      setLogs(logResult.data);
-      setLoading(false);
-    } catch (error) {
-      setError("Error refreshing service data.");
-      setLoading(false);
-    }
-  };
+  if (error) {
+    return <p>{error}</p>;
+  }
 
-  const handleChangeToWait = async () => {
-    try {
-      const result = await axios.put(`/api/services/${id}`, {
-        server_status: "wait",
-      });
-      setService(result.data);
-    } catch (error) {
-      setError("Error changing server status to wait.");
-      console.error(
-        "There was an error changing the server status to wait:",
-        error
-      );
-    }
+  if (!service) {
+    return <p>Loading...</p>;
+  }
+
+  const handleEdit = () => {
+    navigate(`/services/${id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -62,63 +62,42 @@ const ServiceDetail = () => {
       navigate("/services");
     } catch (error) {
       setError("Error deleting service.");
-      console.error("There was an error deleting the service:", error);
     }
   };
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (error) {
-    return <p>{error}</p>;
-  }
-
   return (
     <div>
-      <h1>{service.name}</h1>
+      <h1>Service Detail</h1>
+      <p>Name: {service.name}</p>
       <p>URL: {service.url}</p>
-      <p>Server Status: {service.server_status}</p>
-      <p>Server Info: {service.server_info || ""}</p>
-      <p>Description: {service.description || ""}</p>
-      <p>Work Directory: {service.work_directory || ""}</p>
-      <p>Execute Command: {service.execute_command || ""}</p>
-      <p>Tags: {service.tags ? service.tags.join(", ") : ""}</p>
-      <button onClick={() => navigate(`/services/${id}/edit`)}>Edit</button>
-      <button onClick={handleDelete} style={{ marginLeft: "10px" }}>
-        Delete
+      <p>Server Info: {service.server_info || "N/A"}</p>
+      <p>Description: {service.description || "N/A"}</p>
+      <p>Work Directory: {service.work_directory || "N/A"}</p>
+      <p>Execute Command: {service.execute_command || "N/A"}</p>
+      <p>
+        Tags:{" "}
+        {service.tags && service.tags.length > 0
+          ? service.tags.join(", ")
+          : "N/A"}
+      </p>
+      <p>Status: {service.server_status}</p>
+      <button onClick={refreshService} disabled={refreshing}>
+        {refreshing ? "Refreshing..." : "Refresh"}
       </button>
-      <button onClick={handleRefresh} style={{ marginLeft: "10px" }}>
-        Refresh
-      </button>
-      {service.server_status === "down" && (
-        <button onClick={handleChangeToWait} style={{ marginLeft: "10px" }}>
-          Change to Wait
-        </button>
-      )}
-      <br />
-      <Link to="/services">Back to Services</Link>
-
+      <button onClick={handleEdit}>Edit</button>
+      <button onClick={handleDelete}>Delete</button>
       <h2>Health Check Logs</h2>
-      <div
-        style={{
-          maxHeight: "200px",
-          overflowY: "auto",
-          border: "1px solid #ccc",
-          padding: "10px",
-          marginTop: "10px",
-        }}
-      >
+      <div style={{ maxHeight: "200px", overflowY: "scroll" }}>
         <ul>
           {logs.map((log) => (
             <li key={log.id}>
-              {new Date(log.check_time).toLocaleString()} -{" "}
-              {log.status ? log.status.toUpperCase() : "UNKNOWN"} (Response
-              time: {log.response_time}ms, Status code: {log.status_code})
+              {log.check_time}:{" "}
+              {log.status_code === 200 ? "Healthy" : "Unhealthy"}
             </li>
           ))}
         </ul>
       </div>
+      <Link to="/services">Back to Services</Link>
     </div>
   );
 };

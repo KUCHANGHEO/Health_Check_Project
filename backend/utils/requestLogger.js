@@ -1,14 +1,24 @@
-// backend/requestLogger.js
-const logger = require('./logger');
+const logger = require("./logger");
 
 const requestLogger = (req, res, next) => {
-  const { method, url } = req;
-  const startTime = new Date().getTime();
+  const start = Date.now();
 
-  res.on('finish', () => {
-    const { statusCode } = res;
-    const responseTime = new Date().getTime() - startTime;
-    logger.info(`${method} ${url} ${statusCode} - ${responseTime}ms`);
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    const { method, originalUrl, params, query, body } = req;
+    const { statusCode, statusMessage } = res;
+
+    logger.info(`${method} ${originalUrl} ${statusCode} - ${duration}ms`, {
+      request: {
+        params,
+        query,
+        body,
+      },
+      response: {
+        statusCode,
+        statusMessage,
+      },
+    });
   });
 
   next();
