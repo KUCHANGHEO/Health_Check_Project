@@ -5,8 +5,8 @@ const { sequelize, Service } = require("./models");
 const servicesRouter = require("./routes/services");
 const checkServiceStatus = require("./utils/statusCheck");
 const cron = require("node-cron");
-const logger = require("./logger");
-const requestLogger = require("./requestLogger");
+const logger = require("./utils/logger");
+const requestLogger = require("./utils/requestLogger");
 
 app.use(express.json());
 app.use(requestLogger);

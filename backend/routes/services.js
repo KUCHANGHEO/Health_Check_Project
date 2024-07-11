@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Service, StatusCheck } = require("../models");
-const logger = require("../logger");
+const logger = require("../utils/logger");
 const checkServiceStatus = require("../utils/statusCheck");
 
 // 서비스 등록
@@ -68,6 +68,44 @@ router.get("/services/:id/check", async (req, res) => {
   }
 });
 
+// 특정 서비스 헬스 체크 수행
+router.get("/services/:id/refresh", async (req, res) => {
+  try {
+    const service = await Service.findByPk(req.params.id);
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    if (service.server_status === "up" || service.server_status === "wait") {
+      const statusCheck = await checkServiceStatus(service);
+      await StatusCheck.create(statusCheck);
+      if (statusCheck.status !== "skipped") {
+        await service.update({ server_status: statusCheck.status });
+      }
+    }
+
+    const updatedService = await Service.findByPk(req.params.id);
+    res.status(200).json(updatedService);
+  } catch (error) {
+    logger.error("Error refreshing service status:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 특정 서비스 헬스 체크 로그 조회
+router.get("/services/:id/logs", async (req, res) => {
+  try {
+    const logs = await StatusCheck.findAll({
+      where: { service_id: req.params.id },
+      order: [["check_time", "DESC"]],
+    });
+    res.status(200).json(logs);
+  } catch (error) {
+    logger.error("Error fetching service logs:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 상태 체크 결과 조회
 router.get("/status", async (req, res) => {
   try {
@@ -97,36 +135,36 @@ router.get("/services/:id", async (req, res) => {
 });
 
 // 서비스 수정
-router.put('/services/:id', async (req, res) => {
+router.put("/services/:id", async (req, res) => {
   try {
     const [updated] = await Service.update(req.body, {
-      where: { id: req.params.id }
+      where: { id: req.params.id },
     });
     if (updated) {
       const updatedService = await Service.findByPk(req.params.id);
       res.status(200).json(updatedService);
     } else {
-      throw new Error('Service not found');
+      throw new Error("Service not found");
     }
   } catch (error) {
-    logger.error('Error updating service:', error);
+    logger.error("Error updating service:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
 // 서비스 삭제
-router.delete('/services/:id', async (req, res) => {
+router.delete("/services/:id", async (req, res) => {
   try {
     const deleted = await Service.destroy({
-      where: { id: req.params.id }
+      where: { id: req.params.id },
     });
     if (deleted) {
       res.status(204).send();
     } else {
-      throw new Error('Service not found');
+      throw new Error("Service not found");
     }
   } catch (error) {
-    logger.error('Error deleting service:', error);
+    logger.error("Error deleting service:", error);
     res.status(500).json({ error: error.message });
   }
 });

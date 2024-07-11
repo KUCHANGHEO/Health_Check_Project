@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      server_status: {
+        type: DataTypes.ENUM("up", "down", "wait", "skipped"),
+        allowNull: false,
+      },
       server_info: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -25,6 +29,15 @@ module.exports = (sequelize, DataTypes) => {
       execute_command: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      tags: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
+      fail_count: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
       },
     },
     {

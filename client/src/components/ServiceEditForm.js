@@ -6,10 +6,12 @@ const ServiceEditForm = () => {
   const { id } = useParams();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [serverStatus, setServerStatus] = useState("wait"); // 기본값 설정
   const [serverInfo, setServerInfo] = useState("");
   const [description, setDescription] = useState("");
   const [workDirectory, setWorkDirectory] = useState("");
   const [executeCommand, setExecuteCommand] = useState("");
+  const [tags, setTags] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -21,10 +23,12 @@ const ServiceEditForm = () => {
         const service = result.data;
         setName(service.name);
         setUrl(service.url);
-        setServerInfo(service.server_info);
-        setDescription(service.description);
-        setWorkDirectory(service.work_directory);
-        setExecuteCommand(service.execute_command);
+        setServerStatus(service.server_status);
+        setServerInfo(service.server_info || "");
+        setDescription(service.description || "");
+        setWorkDirectory(service.work_directory || "");
+        setExecuteCommand(service.execute_command || "");
+        setTags(service.tags ? service.tags.join(", ") : ""); // 태그를 콤마로 구분된 문자열로 변환
         setLoading(false);
       } catch (error) {
         setError("Error fetching service data.");
@@ -40,10 +44,12 @@ const ServiceEditForm = () => {
     const updatedService = {
       name,
       url,
+      server_status: serverStatus,
       server_info: serverInfo,
       description,
       work_directory: workDirectory,
       execute_command: executeCommand,
+      tags: tags.split(",").map((tag) => tag.trim()), // 태그를 콤마로 분리하여 배열로 변환
     };
     try {
       await axios.put(`/api/services/${id}`, updatedService);
@@ -72,6 +78,7 @@ const ServiceEditForm = () => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -80,7 +87,20 @@ const ServiceEditForm = () => {
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            required
           />
+        </div>
+        <div>
+          <label>Server Status:</label>
+          <select
+            value={serverStatus}
+            onChange={(e) => setServerStatus(e.target.value)}
+            required
+          >
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="wait">Wait</option>
+          </select>
         </div>
         <div>
           <label>Server Info:</label>
@@ -112,6 +132,14 @@ const ServiceEditForm = () => {
             type="text"
             value={executeCommand}
             onChange={(e) => setExecuteCommand(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Tags (comma separated):</label>
+          <input
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
           />
         </div>
         <button type="submit">Submit</button>

@@ -5,10 +5,12 @@ import { useNavigate, Link } from "react-router-dom";
 const ServiceForm = () => {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [serverStatus, setServerStatus] = useState("wait"); // 기본값 설정
   const [serverInfo, setServerInfo] = useState("");
   const [description, setDescription] = useState("");
   const [workDirectory, setWorkDirectory] = useState("");
   const [executeCommand, setExecuteCommand] = useState("");
+  const [tags, setTags] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,10 +18,12 @@ const ServiceForm = () => {
     const service = {
       name,
       url,
+      server_status: serverStatus,
       server_info: serverInfo,
       description,
       work_directory: workDirectory,
       execute_command: executeCommand,
+      tags: tags.split(",").map((tag) => tag.trim()), // 태그를 콤마로 분리하여 배열로 변환
     };
     try {
       await axios.post("/api/services", service);
@@ -39,6 +43,7 @@ const ServiceForm = () => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            required
           />
         </div>
         <div>
@@ -47,7 +52,20 @@ const ServiceForm = () => {
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            required
           />
+        </div>
+        <div>
+          <label>Server Status:</label>
+          <select
+            value={serverStatus}
+            onChange={(e) => setServerStatus(e.target.value)}
+            required
+          >
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="wait">Wait</option>
+          </select>
         </div>
         <div>
           <label>Server Info:</label>
@@ -79,6 +97,14 @@ const ServiceForm = () => {
             type="text"
             value={executeCommand}
             onChange={(e) => setExecuteCommand(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>Tags (comma separated):</label>
+          <input
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
           />
         </div>
         <button type="submit">Submit</button>
