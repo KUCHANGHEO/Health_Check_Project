@@ -49,7 +49,7 @@ const ServiceEditForm = () => {
       description,
       work_directory: workDirectory,
       execute_command: executeCommand,
-      tags: tags.split(",").map((tag) => tag.trim()), // 태그를 콤마로 분리하여 배열로 변환
+      tags, // 태그를 문자열로 그대로 전달
     };
     try {
       await axios.put(`/api/services/${id}`, updatedService);
