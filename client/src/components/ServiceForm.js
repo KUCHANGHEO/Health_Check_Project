@@ -1,47 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-const ServiceEditForm = () => {
-  const { id } = useParams();
+const ServiceForm = () => {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [serverStatus, setServerStatus] = useState("wait"); // 기본값 설정
+  const [serverStatus, setServerStatus] = useState("wait");
   const [serverInfo, setServerInfo] = useState("");
   const [description, setDescription] = useState("");
   const [workDirectory, setWorkDirectory] = useState("");
   const [executeCommand, setExecuteCommand] = useState("");
   const [tags, setTags] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchService = async () => {
-      try {
-        const result = await axios.get(`/api/services/${id}`);
-        const service = result.data;
-        setName(service.name);
-        setUrl(service.url);
-        setServerStatus(service.server_status);
-        setServerInfo(service.server_info || "");
-        setDescription(service.description || "");
-        setWorkDirectory(service.work_directory || "");
-        setExecuteCommand(service.execute_command || "");
-        setTags(service.tags || ""); // 태그를 문자열로 설정
-        setLoading(false);
-      } catch (error) {
-        setError("Error fetching service data.");
-        setLoading(false);
-      }
-    };
-
-    fetchService();
-  }, [id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedService = {
+    const service = {
       name,
       url,
       server_status: serverStatus,
@@ -49,28 +23,19 @@ const ServiceEditForm = () => {
       description,
       work_directory: workDirectory,
       execute_command: executeCommand,
-      tags, // 태그를 문자열로 그대로 전달
+      tags: tags.split(",").map((tag) => tag.trim()),
     };
     try {
-      await axios.put(`/api/services/${id}`, updatedService);
+      await axios.post("/api/services", service);
       navigate("/services");
     } catch (error) {
-      setError("Error updating service.");
-      console.error("There was an error updating the service:", error);
+      console.error("There was an error registering the service:", error);
     }
   };
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (error) {
-    return <p>{error}</p>;
-  }
-
   return (
     <div>
-      <h1>Edit Service</h1>
+      <h1>Register Service</h1>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Name:</label>
@@ -150,4 +115,4 @@ const ServiceEditForm = () => {
   );
 };
 
-export default ServiceEditForm;
+export default ServiceForm;
