@@ -13,8 +13,10 @@ const ServiceDetail = () => {
   const fetchService = useCallback(async () => {
     try {
       const response = await axios.get(`/api/services/${id}`);
+      console.log("Fetched service:", response.data); // 데이터를 가져온 후 콘솔에 로그를 출력합니다.
       setService(response.data);
     } catch (error) {
+      console.error("Error fetching service data:", error); // 에러 발생 시 콘솔에 로그를 출력합니다.
       setError("Error fetching service data.");
     }
   }, [id]);
@@ -22,8 +24,10 @@ const ServiceDetail = () => {
   const fetchLogs = useCallback(async () => {
     try {
       const response = await axios.get(`/api/services/${id}/logs`);
+      console.log("Fetched logs:", response.data); // 데이터를 가져온 후 콘솔에 로그를 출력합니다.
       setLogs(response.data);
     } catch (error) {
+      console.error("Error fetching service logs:", error); // 에러 발생 시 콘솔에 로그를 출력합니다.
       setError("Error fetching service logs.");
     }
   }, [id]);
@@ -76,8 +80,11 @@ const ServiceDetail = () => {
       <p>Execute Command: {service.execute_command || "N/A"}</p>
       <p>
         Tags:{" "}
-        {service.tags && service.tags.length > 0
-          ? service.tags.join(", ")
+        {service.tags
+          ? service.tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .join(", ")
           : "N/A"}
       </p>
       <p>Status: {service.server_status}</p>

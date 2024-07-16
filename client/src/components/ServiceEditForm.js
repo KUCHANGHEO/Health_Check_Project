@@ -28,7 +28,7 @@ const ServiceEditForm = () => {
         setDescription(service.description || "");
         setWorkDirectory(service.work_directory || "");
         setExecuteCommand(service.execute_command || "");
-        setTags(service.tags ? service.tags.join(", ") : ""); // 태그를 콤마로 구분된 문자열로 변환
+        setTags(service.tags || ""); // 태그를 문자열로 설정
         setLoading(false);
       } catch (error) {
         setError("Error fetching service data.");

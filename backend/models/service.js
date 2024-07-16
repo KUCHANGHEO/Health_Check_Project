@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       tags: {
-        type: DataTypes.JSON,
+        type: DataTypes.STRING, // JSON 타입 대신 STRING 타입 사용
         allowNull: true,
       },
       fail_count: {

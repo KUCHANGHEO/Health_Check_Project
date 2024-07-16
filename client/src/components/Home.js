@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [services, setServices] = useState([]);
-  const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -12,43 +11,44 @@ const Home = () => {
   const [selectedTag, setSelectedTag] = useState("all");
   const navigate = useNavigate();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (tag = "all") => {
     try {
-      const result = await axios.get("/api/services");
+      const result = await axios.get("/api/services", { params: { tag } });
+      console.log("Fetched services:", result.data);
       setServices(result.data);
-      setFilteredServices(result.data);
       setLoading(false);
     } catch (error) {
+      console.error("Error fetching home data:", error);
       setError("Error fetching home data.");
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchTags = async () => {
+  const fetchTags = useCallback(async () => {
     try {
       const result = await axios.get("/api/filters");
       setTags(result.data.tags);
     } catch (error) {
       setError("Error fetching tags.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
     fetchTags();
-  }, []);
+  }, [fetchData, fetchTags]);
 
   const refreshServices = async () => {
     setRefreshing(true);
     try {
       const refreshedServices = await Promise.all(
-        filteredServices.map((service) =>
+        services.map((service) =>
           axios
             .get(`/api/services/${service.id}/refresh`)
             .then((response) => response.data)
         )
       );
-      setFilteredServices(refreshedServices);
+      setServices(refreshedServices);
     } catch (error) {
       setError("Error refreshing service statuses.");
     }
@@ -56,23 +56,10 @@ const Home = () => {
   };
 
   const handleTagChange = (e) => {
-    setSelectedTag(e.target.value);
+    const tag = e.target.value;
+    setSelectedTag(tag);
+    fetchData(tag);
   };
-
-  const applyFilter = useCallback(() => {
-    if (selectedTag === "all") {
-      setFilteredServices(services);
-    } else {
-      const newFilteredServices = services.filter(
-        (service) => service.tags && service.tags.includes(selectedTag)
-      );
-      setFilteredServices(newFilteredServices);
-    }
-  }, [selectedTag, services]);
-
-  useEffect(() => {
-    applyFilter();
-  }, [selectedTag, services, applyFilter]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -117,7 +104,7 @@ const Home = () => {
           </select>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap" }}>
-          {filteredServices.map((service) => (
+          {services.map((service) => (
             <div
               key={service.id}
               onClick={() => handleServiceClick(service.id)}
@@ -134,8 +121,8 @@ const Home = () => {
               <h3>{service.name}</h3>
               <p>
                 Status:{" "}
-                <span style={{ color: getStatusColor(service.server_status) }}>
-                  {service.server_status}
+                <span style={{ color: getStatusColor(service.status) }}>
+                  {service.status}
                 </span>
               </p>
             </div>

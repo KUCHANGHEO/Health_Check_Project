@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { Service, StatusCheck } = require("../models");
+const { Service, StatusCheck, sequelize } = require("../models");
 const logger = require("../utils/logger");
 const checkServiceStatus = require("../utils/statusCheck");
+const { Op } = require("sequelize");
 
 // 서비스 등록
 router.post("/services", async (req, res) => {
@@ -20,9 +21,19 @@ router.post("/services", async (req, res) => {
 
 // 서비스 조회
 router.get("/services", async (req, res) => {
-  logger.info("Fetching services");
+  const { tag } = req.query;
+  logger.info("Fetching services", { tag });
   try {
+    const where = tag && tag !== "all" ? {
+      tags: {
+        [Op.like]: `%${tag}%`
+      }
+    } : {};
+
+    logger.info("Filter condition", { where });
+
     const services = await Service.findAll({
+      where,
       include: [
         {
           model: StatusCheck,
@@ -32,6 +43,8 @@ router.get("/services", async (req, res) => {
         },
       ],
     });
+
+    logger.info("Services fetched from database", { services });
 
     const serviceData = services.map((service) => {
       const lastCheck = service.StatusChecks[0];
@@ -49,6 +62,8 @@ router.get("/services", async (req, res) => {
 
     logger.info("Services fetched successfully", { serviceData });
 
+    // Cache-Control 헤더를 설정하여 캐시를 비활성화
+    res.setHeader('Cache-Control', 'no-store');
     res.status(200).json(serviceData);
   } catch (error) {
     logger.error("Error fetching services:", { message: error.message, stack: error.stack });
@@ -94,7 +109,7 @@ router.get("/services/:id/refresh", async (req, res) => {
     }
 
     const updatedService = await Service.findByPk(req.params.id);
-    res.status(200).json(updatedService);  // 304 상태 코드 대신 200 상태 코드로 변경
+    res.status(200).json(updatedService); // 304 상태 코드 대신 200 상태 코드로 변경
   } catch (error) {
     logger.error("Error refreshing service status:", {
       message: error.message,
@@ -203,21 +218,25 @@ router.get("/filters", async (req, res) => {
     const services = await Service.findAll();
     const tagsSet = new Set();
 
-    services.forEach(service => {
+    services.forEach((service) => {
       if (service.tags) {
-        service.tags.forEach(tag => tagsSet.add(tag));
+        // tags가 문자열인 경우 콤마로 분리하여 배열로 변환
+        service.tags.split(",").forEach((tag) => tagsSet.add(tag.trim()));
       }
     });
 
     const filters = {
-      tags: Array.from(tagsSet)
+      tags: Array.from(tagsSet),
     };
 
     logger.info("Filters fetched successfully", { filters });
 
     res.status(200).json(filters);
   } catch (error) {
-    logger.error("Error fetching filters:", { message: error.message, stack: error.stack });
+    logger.error("Error fetching filters:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
