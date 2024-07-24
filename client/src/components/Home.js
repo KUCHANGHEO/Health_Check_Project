@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -11,44 +12,45 @@ const Home = () => {
   const [selectedTag, setSelectedTag] = useState("all");
   const navigate = useNavigate();
 
+  // 서비스 데이터를 가져오는 함수
   const fetchData = useCallback(async (tag = "all") => {
     try {
       const result = await axios.get("/api/services", { params: { tag } });
-      console.log("Fetched services:", result.data);
       setServices(result.data);
       setLoading(false);
+      applyFilter(result.data, tag); // 데이터를 가져온 후 필터 적용
     } catch (error) {
-      console.error("Error fetching home data:", error);
       setError("Error fetching home data.");
       setLoading(false);
     }
   }, []);
 
-  const fetchTags = useCallback(async () => {
+  // 태그 목록을 가져오는 함수
+  const fetchTags = async () => {
     try {
       const result = await axios.get("/api/filters");
       setTags(result.data.tags);
     } catch (error) {
       setError("Error fetching tags.");
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchData();
     fetchTags();
-  }, [fetchData, fetchTags]);
+  }, [fetchData]);
 
+  // 서비스 상태를 새로고침하는 함수
   const refreshServices = async () => {
     setRefreshing(true);
     try {
-      const refreshedServices = await Promise.all(
+      await Promise.all(
         services.map((service) =>
-          axios
-            .get(`/api/services/${service.id}/refresh`)
-            .then((response) => response.data)
+          axios.get(`/api/services/${service.id}/refresh`)
         )
       );
-      setServices(refreshedServices);
+      // refresh 후에 데이터를 다시 가져오기
+      await fetchData(selectedTag);
     } catch (error) {
       setError("Error refreshing service statuses.");
     }
@@ -58,8 +60,24 @@ const Home = () => {
   const handleTagChange = (e) => {
     const tag = e.target.value;
     setSelectedTag(tag);
-    fetchData(tag);
+    fetchData(tag); // 태그 변경 시 데이터 다시 가져오기
   };
+
+  // 필터를 적용하는 함수
+  const applyFilter = useCallback((servicesData, tag) => {
+    if (tag === "all") {
+      setFilteredServices(servicesData);
+    } else {
+      const newFilteredServices = servicesData.filter(
+        (service) => service.tags && service.tags.split(",").includes(tag)
+      );
+      setFilteredServices(newFilteredServices);
+    }
+  }, []);
+
+  useEffect(() => {
+    applyFilter(services, selectedTag);
+  }, [selectedTag, services, applyFilter]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -104,7 +122,7 @@ const Home = () => {
           </select>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap" }}>
-          {services.map((service) => (
+          {filteredServices.map((service) => (
             <div
               key={service.id}
               onClick={() => handleServiceClick(service.id)}
