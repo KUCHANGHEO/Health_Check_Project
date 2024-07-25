@@ -1,0 +1,53 @@
+version: '3'
+services:
+  db:
+    image: mariadb:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=healthcheck
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql  # 데이터 볼륨 추가
+    networks:
+      - healthcheck-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=db
+      - DATABASE_PORT=3306
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=1234
+      - DATABASE_NAME=healthcheck
+    depends_on:
+      - db
+    networks:
+      - healthcheck-network
+
+  frontend:
+    build: ./client
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+    networks:
+      - healthcheck-network
+
+networks:
+  healthcheck-network:
+    driver: bridge
+
+volumes:
+  db-data:  # 데이터 볼륨 정의
