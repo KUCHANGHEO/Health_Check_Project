@@ -2,30 +2,11 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  mode: "development",
   entry: "./src/index.js",
   output: {
+    path: path.resolve(__dirname, "build"),
     filename: "bundle.js",
-    path: path.resolve(__dirname, "dist"),
-  },
-  devServer: {
-    static: {
-      directory: path.join(__dirname, "public"),
-    },
-    compress: true,
-    port: 3000,
-    proxy: [
-      {
-        context: ["/api"],
-        target: "http://localhost:3001",
-        changeOrigin: true,
-      },
-    ],
-    historyApiFallback: true,
-    devMiddleware: {
-      writeToDisk: true,
-    },
-    allowedHosts: "all", // 이 부분을 추가하세요.
+    publicPath: "/",
   },
   module: {
     rules: [
@@ -45,12 +26,27 @@ module.exports = {
       },
     ],
   },
+  resolve: {
+    extensions: [".js", ".jsx"],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: "./public/index.html",
+      filename: "index.html",
     }),
   ],
-  resolve: {
-    extensions: [".js", ".jsx"],
+  devServer: {
+    static: path.resolve(__dirname, "build"),
+    compress: true,
+    port: 3000,
+    historyApiFallback: true,
+    proxy: [
+      {
+        context: ["/api"],
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+    ],
+    allowedHosts: "all",
   },
 };
