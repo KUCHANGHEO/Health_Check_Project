@@ -23,7 +23,7 @@ const ServiceForm = () => {
       description,
       work_directory: workDirectory,
       execute_command: executeCommand,
-      tags: tags.split(",").map((tag) => tag.trim()),
+      tags: tags, // tags를 문자열로 전송
     };
     try {
       await axios.post("/api/services", service);

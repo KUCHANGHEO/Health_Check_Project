@@ -8,6 +8,11 @@ const { Op } = require("sequelize");
 // 서비스 등록
 router.post("/services", async (req, res) => {
   try {
+    // tags가 배열이면 문자열로 변환
+    if (Array.isArray(req.body.tags)) {
+      req.body.tags = req.body.tags.join(",");
+    }
+
     const service = await Service.create(req.body);
     res.status(201).json(service);
   } catch (error) {
@@ -24,11 +29,14 @@ router.get("/services", async (req, res) => {
   const { tag } = req.query;
   logger.info("Fetching services", { tag });
   try {
-    const where = tag && tag !== "all" ? {
-      tags: {
-        [Op.like]: `%${tag}%`
-      }
-    } : {};
+    const where =
+      tag && tag !== "all"
+        ? {
+            tags: {
+              [Op.like]: `%${tag}%`,
+            },
+          }
+        : {};
 
     logger.info("Filter condition", { where });
 
@@ -63,10 +71,13 @@ router.get("/services", async (req, res) => {
     logger.info("Services fetched successfully", { serviceData });
 
     // Cache-Control 헤더를 설정하여 캐시를 비활성화
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader("Cache-Control", "no-store");
     res.status(200).json(serviceData);
   } catch (error) {
-    logger.error("Error fetching services:", { message: error.message, stack: error.stack });
+    logger.error("Error fetching services:", {
+      message: error.message,
+      stack: error.stack,
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -173,6 +184,10 @@ router.get("/services/:id", async (req, res) => {
 // 서비스 수정
 router.put("/services/:id", async (req, res) => {
   try {
+    if (Array.isArray(req.body.tags)) {
+      req.body.tags = req.body.tags.join(",");
+    }
+
     const [updated] = await Service.update(req.body, {
       where: { id: req.params.id },
     });
